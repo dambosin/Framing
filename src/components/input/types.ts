@@ -7,8 +7,3 @@ export type InputProps<T extends unknown = string> = {
     onBlur?: () => void;
     onFocus?: () => void;
 };
-
-export type Rect = {
-    width: number;
-    height: number;
-}

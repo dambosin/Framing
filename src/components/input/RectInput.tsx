@@ -1,8 +1,9 @@
 import React from 'react';
-import { InputProps, Rect } from './types';
+import { InputProps } from './types';
 import { NumberInput } from './NumberInput';
+import { RectSize } from '@/common/rect';
 
-export function RectInput({id, value, onChange}: InputProps<Rect>) {
+export function RectInput({id, value, onChange}: InputProps<RectSize>) {
 
     function handleReverseClick() {
         onChange({width: value.height, height: value.width});

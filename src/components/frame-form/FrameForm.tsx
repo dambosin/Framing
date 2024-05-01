@@ -1,19 +1,16 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { FileInputWithLabel, NumberInputWithLabel, RectInputWithLabel, TextInputWithLabel } from '../input-label/LabelHOC';
-import { Rect } from '../input/types';
+import { FrameModel } from '../frame-selector/types';
+import { RectSize } from '@/common/rect';
 
-export type FrameModel = {
-    rect: Rect;
-    image: File;
-    frame: string;
-}
+
 
 type FrameFormProps = {
     value: FrameModel;
     onChange?: (value: FrameModel) => void;
 }
 export function FrameForm({value, onChange}: FrameFormProps) {
-    const [rect, setRect] = useState<Rect>(value.rect);
+    const [rect, setRect] = useState<RectSize>(value.rect);
     const [image, setImage] = useState<File>(value.image);
     const [frame, setFrame] = useState<string>(value.frame);
 
@@ -29,7 +26,7 @@ export function FrameForm({value, onChange}: FrameFormProps) {
         setFrame(value.frame);
     }, [value.frame])
 
-    function handleRectChange(value: Rect) {
+    function handleRectChange(value: RectSize) {
         setRect(value);
     }
 

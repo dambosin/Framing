@@ -1,13 +1,13 @@
 'use client'
+import { Canvas } from '@/components/canvas';
 import React from 'react';
-import { Canvas } from '../components/canvas/Canvas';
 
 const formModel = {
     rect: {
         width: 20,
         height: 30
     },
-    image: 'canvas-bg.jpg',
+    image: new File([], 'canvas-bg.jpg'),
     frame: ''
 };
 
