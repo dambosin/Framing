@@ -1,3 +1,4 @@
+import { FrameModel } from '@/components/frame-form/FrameForm';
 import React, { useEffect, useRef, useState } from 'react';
 
 type Rect = {
@@ -5,13 +6,15 @@ type Rect = {
     height: number;
 };
 
-export function Canvas() {
+type CanvasProps = FrameModel;
+
+export function Canvas(props: CanvasProps) {
     const center = {
-        x: 1200,
-        y: 500,
+        x: 200,
+        y: 300,
     };
 
-    const [rect, setRect] = useState<Rect>({width: 500, height: 300})
+    const [rect, setRect] = useState<Rect>({width: props.rect.width * 5, height: props.rect.height * 5})
     const [frameWidth, setFrameWidth] = useState<number>(10);
 
     const ref = useRef<HTMLCanvasElement | null>(null);
@@ -22,7 +25,8 @@ export function Canvas() {
     }, []);
 
     function draw(ctx: CanvasRenderingContext2D, img: HTMLImageElement) {
-        ctx.drawImage(img, -400, 0);
+        ctx.clearRect(0,0, 400, 600);
+        ctx.drawImage(img, center.x - rect.width / 2, center.y - rect.height / 2, rect.width, rect.height);
         ctx.beginPath();
         ctx.moveTo(center.x - rect.width / 2, center.y - rect.height / 2);
         ctx.lineTo(center.x + rect.width / 2, center.y - rect.height / 2);
@@ -63,15 +67,24 @@ export function Canvas() {
             const ctx = ref.current.getContext('2d');
             if (ctx) {
                 console.log('ctx', ctx);
-                const img = new Image(); 
-                img.addEventListener('load', () => draw(ctx, img));
-                img.src = "canvas-bg.jpg";
-                console.log('img', img); 
+                const reader = new FileReader();
+                reader.onloadend = (event) => {0
+
+                    const img = new Image(); 
+                    img.onload = () => draw(ctx, img);
+                    img.src = (event.target?.result ?? '') as string;
+                    console.log('img', img); 
+                }
+                reader.readAsDataURL(props.image);
             }
         }
-    }, [ref.current]);
+    }, [ref.current, props.image, rect.height, rect.width]);
+
+    useEffect(() => {
+        setRect({width: props.rect.width * 5, height: props.rect.height * 5});
+    }, [props.rect.height, props.rect.width])
 
     return (
-        <canvas id={'canvas'} width="1500" height="1000" style={{margin: 'auto'}}></canvas>
+        <canvas id={'canvas'} width="400" height="600" style={{margin: 'auto', border: 'green 1px solid'}}></canvas>
     )
 }
