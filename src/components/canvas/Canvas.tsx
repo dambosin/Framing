@@ -3,8 +3,12 @@ import { RectSize } from '@/common/rect';
 import { Coordinates } from '@/common';
 import { FrameModel } from '../frame-selector/types';
 import { Rect } from '@/common/rect';
+import {useFrame} from './hooks';
+import { FrameDrawModel } from './types';
 
 type CanvasProps = FrameModel;
+
+
 
 export function Canvas(props: CanvasProps) {
     const center: Coordinates = {
@@ -12,10 +16,10 @@ export function Canvas(props: CanvasProps) {
         y: 300,
     };
 
-    const stroke = 5;
     const scale = 5;
     const [rect, setRect] = useState<Rect>(new Rect({width: props.rect.width * scale, height: props.rect.height * scale}));
-    const [frameWidth, setFrameWidth] = useState<number>(10);
+    const frames = useFrame(props.frame); 
+    // const frames = [];
 
     const ref = useRef<HTMLCanvasElement | null>(null);
     useEffect(() => {
@@ -24,61 +28,58 @@ export function Canvas(props: CanvasProps) {
         }
     }, []);
 
-    function draw(ctx: CanvasRenderingContext2D, img: HTMLImageElement) {
+    function draw(ctx: CanvasRenderingContext2D, img: HTMLImageElement, frame: FrameDrawModel) {
+        ctx.reset();
         ctx.clearRect(0,0, 400, 600);
+        ctx.translate(center.x, center.y);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(-rect.getWidthCenter(), -rect.getHeightCenter());
+        ctx.lineTo(rect.getWidthCenter(), -rect.getHeightCenter());
+        ctx.lineTo(rect.getWidthCenter(), rect.getHeightCenter());
+        ctx.lineTo(-rect.getWidthCenter(), rect.getHeightCenter());
+        ctx.lineTo(-rect.getWidthCenter(), -rect.getHeightCenter());
+        ctx.closePath();
+        ctx.clip();
         const {coordinates, size} = getFittingRect(center, new Rect({width: img.width, height: img.height}), rect);
-        ctx.drawImage(img, coordinates.x, coordinates.y, size.width, size.height);
+        ctx.drawImage(img, coordinates.x - center.x, coordinates.y - center.y, size.width, size.height);
+        ctx.restore();
 
-        drawTopBar();
-
-        drawLeftBar();
-
-        drawRightBar();
-
-        drawBottomBar();
-
-        function drawBottomBar() {
-            ctx.beginPath();
-            ctx.moveTo(center.x + rect.getWidthCenter(), center.y + rect.getHeightCenter());
-            ctx.lineTo(center.x - rect.getWidthCenter(), center.y + rect.getHeightCenter());
-            ctx.lineTo(center.x - rect.getWidthCenter(), center.y + rect.getHeightCenter() - stroke);
-            ctx.lineTo(center.x +   rect.getWidthCenter(), center.y + rect.getHeightCenter() - stroke);
-            ctx.lineTo(center.x + rect.getWidthCenter(), center.y + rect.getHeightCenter());
-            ctx.fillStyle = 'purple';
-            ctx.fill();
+        ctx.save();
+        let width = rect.getWidth();
+        let height = rect.getHeight();
+        const numberOfEdges = 4;
+        for (let i = 0; i < numberOfEdges; i++) {
+            drawFrameSide(new Rect({width, height}), numberOfEdges, i);
+            const temp = height;
+            height = width;
+            width = temp;
         }
 
-        function drawRightBar() {
-            ctx.beginPath();
-            ctx.moveTo(center.x + rect.getWidthCenter(), center.y - rect.getHeightCenter());
-            ctx.lineTo(center.x + rect.getWidthCenter(), center.y + rect.getHeightCenter());
-            ctx.lineTo(center.x + rect.getWidthCenter() - stroke, center.y + rect.getHeightCenter());
-            ctx.lineTo(center.x + rect.getWidthCenter() - stroke, center.y - rect.getHeightCenter());
-            ctx.lineTo(center.x + rect.getWidthCenter(), center.y - rect.getHeightCenter());
-            ctx.fillStyle = 'yellow';
-            ctx.fill();
+        function clip(localRect: Rect, numberOfEdges = 4 ) {
+                const delta = Math.tan(360 / numberOfEdges / 2 * Math.PI / 180) * frame.getHeightCenter();
+                ctx.beginPath();
+                ctx.moveTo(-localRect.getWidthCenter() - delta, -localRect.getHeightCenter() - frame.getHeightCenter());
+                ctx.lineTo(localRect.getWidthCenter() + delta, -localRect.getHeightCenter() - frame.getHeightCenter());
+                ctx.lineTo(localRect.getWidthCenter(), -localRect.getHeightCenter());
+                ctx.lineTo(-localRect.getWidthCenter(), -localRect.getHeightCenter());
+                ctx.lineTo(-localRect.getWidthCenter() - delta, -localRect.getHeightCenter() - frame.getHeightCenter());
+                ctx.clip();
         }
-
-        function drawLeftBar() {
-            ctx.beginPath();
-            ctx.moveTo(center.x - rect.getWidthCenter(), center.y - rect.getHeightCenter());
-            ctx.lineTo(center.x - rect.getWidthCenter(), center.y + rect.getHeightCenter());
-            ctx.lineTo(center.x - rect.getWidthCenter() + stroke, center.y + rect.getHeightCenter());
-            ctx.lineTo(center.x - rect.getWidthCenter() + stroke, center.y - rect.getHeightCenter());
-            ctx.lineTo(center.x - rect.getWidthCenter(), center.y - rect.getHeightCenter());
-            ctx.fillStyle = 'green';
-            ctx.fill();
-        }
-
-        function drawTopBar() {
-            ctx.beginPath();
-            ctx.moveTo(center.x - rect.getWidthCenter(), center.y - rect.getHeightCenter());
-            ctx.lineTo(center.x + rect.getWidthCenter(), center.y - rect.getHeightCenter());
-            ctx.lineTo(center.x + rect.getWidthCenter(), center.y - rect.getHeightCenter() + stroke);
-            ctx.lineTo(center.x - rect.getWidthCenter(), center.y - rect.getHeightCenter() + stroke);
-            ctx.lineTo(center.x - rect.getWidthCenter(), center.y - rect.getHeightCenter());
-            ctx.fillStyle = 'red';
-            ctx.fill();
+        
+        function drawFrameSide(localRect: Rect, numberOfEdges: number = 4, edge: number = 0) {
+                ctx.save();
+                const pos: Coordinates = {
+                    x: -localRect.getWidthCenter() - frame.getWidth() / 2,
+                    y: -localRect.getHeightCenter() - frame.getHeight() / 2
+                }
+                ctx.rotate(2 / numberOfEdges* edge * Math.PI );
+                clip(localRect, numberOfEdges);
+                while (pos.x < localRect.getWidthCenter() + frame.getWidth() / 2) {
+                    ctx.drawImage(frame.getImage(), pos.x, pos.y, frame.getWidth() / 2, frame.getHeight() / 2);
+                    pos.x += frame.getWidth() / 2;
+                }
+                ctx.restore();
         }
     }
 
@@ -132,26 +133,45 @@ export function Canvas(props: CanvasProps) {
     }
 
     useEffect(() => {
-        if (ref.current) {
+        if (ref.current && frames.filter(frame => frame)) {
             const ctx = ref.current.getContext('2d');
             if (ctx) {
                 const reader = new FileReader();
-                reader.onloadend = (event) => {0
+                reader.onloadend = (event) => {
 
                     const img = new Image(); 
-                    img.onload = () => draw(ctx, img);
+                    img.onload = () => frames.forEach((frame, i) => {
+                        draw(ctx, img, frame);
+                        console.log(`draw ${i} with frame`, frame.getName());
+                        handelSave(frame.getName());
+                    });
                     img.src = (event.target?.result ?? '') as string;
                 }
                 reader.readAsDataURL(props.image);
             }
         }
-    }, [ref.current, props.image, rect.getHeight(), rect.getWidth()]);
+        console.log('useEffect');
+    }, [ref.current, props.image, rect.getHeight(), rect.getWidth(), frames.join(',')]);
 
     useEffect(() => {
         setRect(new Rect({width: props.rect.width * scale, height: props.rect.height * scale}));
     }, [props.rect.height, props.rect.width])
 
+    function handelSave(name: string = 'canvas') {
+        if(ref.current) {
+            const link = document.getElementById('link');
+            if (link) {
+                link.setAttribute('download', `${name}.jpg`);
+                link.setAttribute('href', ref.current.toDataURL("image/png").replace("image/png", "image/octet-stream"));
+                link.click();
+            }
+        }
+    }
+
     return (
-        <canvas id={'canvas'} width="400" height="600" style={{margin: 'auto', border: 'green 1px solid'}}></canvas>
+        <>
+            <canvas id={'canvas'} width="400" height="600" style={{margin: 'auto', border: 'green 1px solid'}}></canvas>
+            <a id={'link'}></a>
+        </>
     )
 }

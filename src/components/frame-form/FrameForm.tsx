@@ -2,6 +2,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { FileInputWithLabel, NumberInputWithLabel, RectInputWithLabel, TextInputWithLabel } from '../input-label/LabelHOC';
 import { FrameModel } from '../frame-selector/types';
 import { RectSize } from '@/common/rect';
+import { framesData } from '@/common/frames';
 
 
 
@@ -12,7 +13,7 @@ type FrameFormProps = {
 export function FrameForm({value, onChange}: FrameFormProps) {
     const [rect, setRect] = useState<RectSize>(value.rect);
     const [image, setImage] = useState<File>(value.image);
-    const [frame, setFrame] = useState<string>(value.frame);
+    const [frame, setFrame] = useState<string[]>(value.frame);
 
     useEffect(() => {
         setRect(value.rect);
@@ -24,7 +25,7 @@ export function FrameForm({value, onChange}: FrameFormProps) {
 
     useEffect(() => {
         setFrame(value.frame);
-    }, [value.frame])
+    }, [value.frame.join(',')])
 
     function handleRectChange(value: RectSize) {
         setRect(value);
@@ -34,9 +35,17 @@ export function FrameForm({value, onChange}: FrameFormProps) {
         setImage(value);
     }
 
-    function handleFrameChange (value: string) {
-        if(value && value !== frame) {
-            setFrame(value);
+    function handleFrameChange (e: ChangeEvent<HTMLSelectElement>) {
+        const options = e.target.options;
+        if(options) {
+            const res: string[] = [];
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].selected) {
+                    res.push(options[i].value);
+                }
+            }
+            setFrame([...res]);
+
         }
     }
 
@@ -61,7 +70,13 @@ export function FrameForm({value, onChange}: FrameFormProps) {
                 hideInput
             />
             <RectInputWithLabel direction="row" label="Размер" id="frame-form-rect" value={rect} onChange={handleRectChange}/>
-            <TextInputWithLabel direction="row" label="Багетная рама" id="frame-form-frame" placeholder="Рама" value={frame} onChange={handleFrameChange}/>
+            {/* <TextInputWithLabel direction="row" label="Багетная рама" id="frame-form-frame" placeholder="Рама" value={frame} onChange={handleFrameChange}/> */}
+            <label htmlFor='frame-form-frame'>Багетная рама</label>
+            <select multiple id="frame-form-frame"  defaultValue={frame} onChange={handleFrameChange}>
+                {Object.keys(framesData).map((frame) => 
+                    <option key={framesData[frame].fileName} value={framesData[frame].fileName}>{framesData[frame].name}</option>)
+                    }
+            </select>
             <button onClick={handleSubmit}>Submit</button>
         </div>
     );

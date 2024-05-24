@@ -4,7 +4,7 @@ import { FrameForm } from '../frame-form';
 import { Canvas } from '../canvas';
 
 export function FrameSelector() {
-    const [value, setValue] = useState<FrameModel>({rect: {width: 20, height: 30}, image: new File([], ''), frame: ''});
+    const [value, setValue] = useState<FrameModel>({rect: {width: 50, height: 70}, image: new File([], 'testImage.jpg'), frame: ['testFrame.jpg']});
 
     function handleChange(value: FrameModel) {
         setValue(value);
